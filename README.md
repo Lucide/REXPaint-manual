@@ -19,7 +19,7 @@
    * ".txt" and "TXT" becomes `.txt`
    * ".csv" and "CSV" becomes `.csv`
    * ".xml" and "XML" becomes `.xml`
-   * "ANSI" stays that way because it's a [name](https://www.ansi.org/)
+   * ".ans" and "ANS" becomes `.ans` ("ANSI" stays that way because it's a [name](https://www.ansi.org/))
 8. small changes can be made to remove clarifications made useless by formatting:
    * "by pressing the `Shift` key" becomes "by pressing `Shift`
    * "by pressing the `x` button/key" stays that way, or it wouldn't be clear if it's a UI button or a keyboard key
@@ -28,7 +28,8 @@
 11. "--" em dashes have been converted to "—"
 12. single chars were quoted with `''` that's a bit of a programmer thing, they should be converted to `""`
 13. URLs should be represented as text links when appropriate
-14. the manual should be checked with a linter, but warning `MD024` should be ignored.
+14. text links to appendices should be **bold**
+15. the manual should be checked with a linter, but warning `MD024` should be ignored.
 
 ---
 Feel free to suggest changes and improvements
