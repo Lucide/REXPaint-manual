@@ -1,4 +1,4 @@
-# REXPaint v1.04 - Manual <!-- omit in toc -->
+# REXPaint v1.05 - Manual <!-- omit in toc -->
 
 A powerful and user-friendly ASCII art editor.
 
@@ -22,11 +22,12 @@ An overview of REXPaint's major features:
 * True-color RGB/HSV color picker
 * Create multi-layered images
 * Zooming: Scale an image by changing font size on the fly
+* Custom fonts and support for extended characters and tilesets
 * Browse art assets and begin editing at the press of a button
 * Images highly compressed
 * Export `.png` for use in other programs or on the web
 * Export `.ans` files for ANSI art
-* Other exportable formats: `.txt`, `.csv`, `.xml`, `.xpm`, `BBCode`
+* Other exportable formats: `.txt`, `.csv`, `.xml`, `.xpm`, `BBCode`, `C:DDA`
 * Import `.txt` files
 * Skinnable interface
 
@@ -60,6 +61,7 @@ An overview of REXPaint's major features:
   * [Order](#order)
   * [Visibility & Locking](#visibility--locking)
   * [Merging](#merging)
+  * [Multi-layer Editing](#multi-layer-editing)
   * [Extended Layers Mode](#extended-layers-mode)
 * [Browsing](#browsing)
   * [File/Image Control](#fileimage-control)
@@ -94,6 +96,8 @@ An overview of REXPaint's major features:
   * [`BBCode`](#bbcode)
 * [Appendix F: Importing Text Files](#appendix-f-importing-text-files)
 * [Appendix G: Importing `.png`s](#appendix-g-importing-pngs)
+* [Appendix H: Batch Exporting `.png`s](#appendix-h-batch-exporting-pngs)
+* [Appendix I: Exporting ANSI art for C:DDA](#appendix-i-exporting-ansi-art-for-cdda)
 
 ## Canvas
 
@@ -138,9 +142,10 @@ The colors to be applied are shown to the right of their button, and the current
 * **Copy** `Ctrl-c`\
   Copies a rectangular area of the image into the clipboard for later pasting. Always copies all attributes (glyph and colors) of the regardless of current apply settings. Alternate mode:
 * **Cut** `Ctrl-x`\
-  Cut mode erases everything in a certain area after storing it to the clipboard.
+  Cut mode erases everything in a certain area after storing it to the clipboard. Note that if the Paste tool is in an _alternate mode_, any copy actions also automatically mirror the copied contents to match that mode.
 * **Paste** `Ctrl-v`\
-  Paste the clipboard contents to the image. While the copy/cut command stores all glyph and color information, only those attributes for which the apply mode is currently active will by pasted. Alternate modes: Flip clipboard contents horizontally, vertically, or both (by default this also automatically converts any non-symmetrical glyphs with mirror images; to flip by position only and leave glyphs unchanged set "Paste-flip ASCII" to No in the options menu).
+  Paste the clipboard contents to the image. While the copy/cut command stores all glyph and color information, only those attributes for which the apply mode is currently active will by pasted.\
+  _Alternate modes_: Flip clipboard contents horizontally, vertically, or both (by default this also automatically converts any non-symmetrical glyphs with mirror images; to flip by position only and leave glyphs unchanged set `Paste-flip ASCII` to `No` in the options menu).
 
 ### Preview
 
@@ -155,8 +160,9 @@ All image manipulation actions can be undone/redone (`Ctrl-z`/`Ctrl-y`, or just 
 Images themselves do not store font information, instead remembering only what glyph/character index belongs at each position. This means you can dynamically change the size and/or appearance of an image by simply switching the font (`Ctrl-PgUp`/`PgDn` or `<`/`>`).
 
 ---
-By default, both the GUI and images use a standard 256-character code page 437 font. REXPaint makes this same font available at several sizes (and changes #254 and #255 to radio boxes). You can edit these fonts (in the `data/fonts/` directory), and/or add new ones by creating a new `.png` bitmap and listing it in the `data/fonts/_config.xt` text file. Fonts do not require square glyphs (rectangles are okay), but both the GUI and Art font must use the same dimensions.\
-When creating a custom font you could even replace some or all of the glyphs/characters/symbols, though you should leave the GUI font unchanged so the interface appears as expected (notice how `_config.xt` defines the GUI and art fonts separately—they do not have to use the same font!).\
+By default, both the GUI and images use a standard 256-character Code Page 437 font. REXPaint makes this same font available at several sizes (and changes #254 and #255 to radio boxes). You can edit these fonts (in the `data/fonts/` directory), and/or add new ones by creating a new `.png` bitmap and listing it in the `data/fonts/_config.xt` text file. Fonts do not require square glyphs (rectangles are okay), but both the GUI and Art font must use the same glyph dimensions.\
+When creating a custom font you could even replace some or all of the glyphs/characters/symbols, though you should leave the GUI font unchanged so the interface appears as expected (notice how `_config.xt` defines the GUI and art fonts separately—they do not have to use the same font!). Note that custom fonts always treat index 32 as a space, regardless of what the font bitmap contains there.\
+Although the default number of rows in a font bitmap is 16, and that is the largest number REXPaint will display at once, fonts with additional rows are supported, essentially allowing space for an "unlimited" number of glyphs in an image. Simply specify the proper number of rows available for the relevant art font in `_config.xt` and it will be loaded normally (16 columns is still a requirement), then you can use `PgUp`/`PgDn` or `Wheel` (with cursor in the glyph area) to see and use glyphs beyond #255. The mouse scrolling rate can be adjusted in `REXPaint.cfg` via `glyphScrollRowCount`. If any art fonts have more than 16 rows, the font window will display numbers at the top right indicating the number of rows currently above and below the current view. To make it easier to use large tilesets, by default right-clicking on an image glyph to select a glyph currently outside the viewable glyph window does not automatically scroll the view to show it unless you right-click on the same selected glyph a second time, though you can overide this behavior and have it always scroll immediately by setting `glyphSelectAlwaysAutoscrolls` in `REXPaint.cfg`.\
 One supported feature not used by the included fonts is alpha transparency. Font bitmaps are drawn as white on black, but know that using shades of gray will cause the foreground color to be semi-transparent to a degree equal to the shade of gray (e.g., pixels drawn using 128,128,128 gray will appear as 50% transparent). Also, even though they may only use two colors, bitmaps must be saved as 32-bit pngs (using 8-bit pngs will crash REXPaint). The font bitmap can use any background color, where REXPaint will automatically detect it by checking the upper leftmost pixel (at 0,0). By extension, if the character at the first position wants to use that pixel, REXPaint will not be able to automagically detect the background color; in this situation, you can override the background color key with a specific RGB color in `REXPaint.cfg` via `fontKeyColorOverride`.
 
 ---
@@ -169,7 +175,7 @@ For reference you can toggle highlighting of all used glyphs by pressing `u` (th
 
 ### Glyph Swapping
 
-To replace every occurrence of a glyph in all visible unlocked layers of an image, `Ctrl-LMB` on it in the font window, then `Ctrl-LMB` on the new glyph to replace it with. After selecting a source glyph, the swap can be cancelled by again pressing `Ctrl-LMB` on the same glyph.
+To replace every occurrence of a glyph in all visible unlocked layers of an image, `Shift-LMB` on it in the font window, then `Shift-LMB` on the new glyph to replace it with. After selecting a source glyph, the swap can be cancelled by again pressing `Shift-LMB` on the same glyph.
 
 ## Palette
 
@@ -238,7 +244,7 @@ To swap all instances of a single color throughout an image (foreground and back
 Having a properly set up palette (ideally with shades of colors listed by row) also enables you to easily shift individual colors directly on an image to quickly get/test the right color/shade without manually selecting them in the palette every time. Hold `Shift` and use the left and right mouse buttons on the image to shift the foreground color based on its position in the palette (black and white palette positions are skipped); use `Alt` instead for background color. This only works for colors found in the current palette.
 
 ---
-Alternatively, press `Ctrl-h`/`s`/`v` to activate the respective HSV shifting mode, in which using the left/right mouse buttons and `Shift`/`Alt` as indicated above will instead tweak that characteristic of the target cell's foreground/background, completely ignoring palette colors. Return to palette-based shifting mode by toggling the current HSV shifting mode again.
+Alternatively, press `Shift-h`/`s`/`v` to activate the respective HSV shifting mode, in which using the left/right mouse buttons and `Shift`/`Alt` as indicated above will instead tweak that characteristic of the target cell's foreground/background, completely ignoring palette colors. Return to palette-based shifting mode by toggling the current HSV shifting mode again.
 
 ---
 
@@ -253,7 +259,7 @@ Draw using the transparent background color to create a transparent cell/area, b
 
 ## Layers
 
-Use of layers is completely optional, and a majority of users will probably do just fine with the single layer automatically created for an image. Layer functionality exists mostly for the workflow/editing benefits of keeping different components of an image on separate layers, or perhaps having alternate versions of a certain part of the image. Other advantages are limited since layers cannot currently be blended (REXPaint could support color blending and filtering modes, though this feature hasn't been added yet since there probably isn't a huge demand for it).
+Use of layers is completely optional, and a majority of users will probably do just fine with the single layer automatically created for an image. Layer functionality exists mostly for the workflow/editing benefits of keeping different components of an image on separate layers, or perhaps having alternate versions of a certain part of the image. Other advantages are limited since layers cannot currently be blended.
 
 ### Control
 
@@ -280,6 +286,16 @@ Any layer can be locked (`Shift-#` or the `Lck` button), which prevents editing 
 
 Use the `Ctrl-Shift-m` command to merge the active layer downward, permanently combining it with the one below. Only the base layer cannot be merged (as there is nothing under it). This action is irreversible, so use it carefully.
 
+### Multi-layer Editing
+
+The copy/cut/paste tools in particular can work across multiple layers at once, simultaneously copying the same area from more than one layer. To get this effect, use `d` to increment the amount of _depth_ you want to manipulate. While the depth is greater than 1, additional layers below the current active layer will be included in each operation. For example, using a depth of 2 to copy an area from layer 4 will add that area from both layer 4 and 3 to the clipboard, and maintaining the same depth value while pasting to layer 2 will paste the layer 4 contents on layer 2, and layer 3 contents on layer 1.
+
+---
+Nothing will copy from intermediary hidden layers, and nothing can be cut from locked layers (though the copy portion of a cut operation will still work on that layer). Nothing will paste into intermediary hidden or locked layers, either.\
+`Shift-d` decrements the depth counter.
+
+---
+
 ### Extended Layers Mode
 
 While a single image may include up to nine layers, normally only the lowest four of those will be listed in the Layers window. To view more than that, click the `E` button or press `Ctrl-Shift-l` to toggle *Extended Layers Mode*, which will cover the Info window but allow as many as nine layers to be listed at once. If you're using hotkeys for layer control, those will still work as usual even if those layers are not currently visible in the list.
@@ -300,7 +316,8 @@ You'll notice there is always one unnamed image created on startup; you don't ha
 
 ---
 Realize that browse mode is mostly an image browser, not a full-featured file manager, so actions like image moving, directory operations, etc. should be performed through Windows. You can, however, rename `RMB`, duplicate `Shift-LMB` and delete `Ctrl-Shift-Alt-LMB` images from here. Image deletion is permanent, so be careful with it!\
-Feel free to create additional subdirectories under REXPaint's `images/` directory, as those will also be shown in the browser, and may be collapsed/expanded as well.
+Feel free to create additional subdirectories under REXPaint's `images/` directory, as those will also be shown in the browser, and may be collapsed/expanded as well.\
+While REXPaint is open, you can reload all image files to reflect changes at the file system level via `Ctrl-Shift-r` or the `R` button at the bottom of the browser. Of course you'll lose any unsaved images or progress, but you'll be warned if that will happen. Once complete, the reloading process will do its best to restore the original browsing state and selected image.
 
 ---
 
@@ -338,7 +355,7 @@ The first time REXPaint is run, it will create a new `REXPaint.cfg` file using t
 There are currently several options not mentioned elsewhere in the manual, implemented by request, which require editing `REXPaint.cfg` to take advantage of:
 
 * `unlimitedFontSize`: Setting this value to 1 loads all fonts, even those which will allow extreme zooming where it produces a window which doesn't fit on the screen! This is far from ideal usage of REXPaint, but may be helpful in special circumstances.
-* `txtOutputUTF8`: `TXT` export
+* `txtOutputUTF8`: Whether the `TXT` export should use UTF8 encoding instead of pure ASCII characters. The former uses unicode hard spaces, which you may not want depending on your use case.
 * `baseImagePath`: Set to the base path from which to load images into the browser, relative to the `.exe` location. As a relative path it can use `../` to move to higher directories.
 * `exportsToBase`: Whether exported files are always placed in the base image path, rather than to the same path as their source image which may be in a subdirectory.
 * `ignorePath`: Use this to specify one or more paths (relative to the `baseImagePath`) which will be ignored by the image loader so that even those directories (and all subdirectories and their contents) will not appear in the file browser. You can list as many separate paths as you like by using `ignorePath` on a separate line for each.
@@ -367,6 +384,8 @@ Many commands that are either obvious or too advanced are not listed in REXPaint
 | `Ctrl-Wheel`                 | change font (scale image/UI)                                 |
 | `LMB`                        | select glyph                                                 |
 | `⇑`/`⇓`/`⇐`/`⇒`              | shift selection                                              |
+| `Wheel` / `PgUp`/`PgDn`      | scroll view to extended glyphs (if present)                  |
+| `Home`/`End`                 | scroll view to first/last extended glyph page (if present)   |
 | `u`                          | toggle **u**sed glyph highlighting (slow for massive images) |
 | `Alt` (hold)                 | highlight hovered glyph in current layer                     |
 | `Shift-LMB` x2               | swap occurrences of *glyph 1* with *glyph 2*                 |
@@ -434,6 +453,7 @@ Many commands that are either obvious or too advanced are not listed in REXPaint
 | `Alt-w`                    | s**w**ap foreground/background colors                   |
 | `Shift-Alt-r`/`g`/`b`      | toggle foreground color channel application (all tools) |
 | `Ctrl-Shift-Alt-r`/`g`/`b` | toggle background color channel application (all tools) |
+| `d`/`shift-d`              | increment/decrement copy\cut\paste layer **d**epth      |
 
 ### Canvas
 
@@ -448,21 +468,24 @@ Many commands that are either obvious or too advanced are not listed in REXPaint
 | `RMB`                     | copy cell contents (applied modes only), where source is current layer                    |
 | `Ctrl-RMB`                | as `RMB`, but from uppermost visible layer (useful for reference layers)                  |
 | `Shift`/`Alt` (hold)      | hide preview                                                                              |
-| `Ctrl-arrow`/numpad       | shift all layers in indicated direction (wraps)                                           |
+| `Shift-arrow`/numpad      | shift all layers in indicated direction (wraps)                                           |
 | `Shift-Ctrl-arrow`/numpad | shift active layer in indicated direction (wraps)                                         |
-| `Ctrl-h`/`s`/`v`          | switch color shift mode (repeat same to restore to *palette* mode)                        |
+| `n`                       | toggle explicit transparency mode                                                         |
+| `Shift-Alt-n`             | toggle explicit transparency color set                                                    |
+| `Shift-h`/`s`/`v`         | switch color shift mode (repeat same to restore to *palette* mode)                        |
 | `Shift-LMB`/`RMB`         | apply color shift to foreground (`Prev`/`Next` or `⇓`/`⇑`, whichever appropriate)         |
 | `Alt-LMB`/`RMB`           | apply color shift to background (`Prev`/`Next` or `⇓`/`⇑`, whichever appropriate)         |
 | `Shift-Alt-w`             | s**w**ap foreground/background colors throughout active layer                             |
 | `Ctrl-Shift-Alt-w`        | s**w**ap foreground/background colors throughout image                                    |
-| `Ctrl-Shift-c`            | copy entire active layer (to clipboard)                                                   |
+| `Ctrl-Shift-c`            | copy entire active layer (to clipboard) (does multi-layer copy if selected depth > 1)     |
 | `z`/`Ctrl-z`              | undo                                                                                      |
 | `y`/`Ctrl-y`              | redo                                                                                      |
 | `Ctrl-d`                  | toggle rect dimension **d**isplay (for drawing/selecting a rectangle; also `RDim` button) |
 | `Ctrl-g`                  | toggle **g**rid                                                                           |
 | `Alt-Wheel`               | change grid resolution                                                                    |
 | `Alt-g`                   | toggle **g**rid under mode (show in undrawn areas only)                                   |
-| `Ctrl-Tab`                | switch between current/previous image                                                     |
+| `Ctrl-Tab`                | switch between current/latest image                                                       |
+| `Ctrl-⇑`/`⇓`              | edit previous/next image (even in paint mode)                                             |
 
 ### Layers
 
@@ -504,6 +527,7 @@ Many commands that are either obvious or too advanced are not listed in REXPaint
 | `F2`                    | rename currently selected image |
 | `Shift-LMB`             | duplicate image                 |
 | `Ctrl-Shift-Alt-LMB`    | delete image (permanent!)       |
+| `Ctrl-Shift-r`          | reload all image files          |
 | `Ctrl-⇑`/`⇓` / `L`/`R`  | previous/next directory         |
 | `Home`/`End`            | first/last image                |
 | `LMB` (folder)          | collapse/expand folder          |
@@ -513,17 +537,19 @@ Many commands that are either obvious or too advanced are not listed in REXPaint
 
 ### Image
 
-| key      | function \[subfunction\]                    |
-| -------- | ------------------------------------------- |
-| `Ctrl-n` | **n**ew (in base path)                      |
-| `Ctrl-r` | **r**esize                                  |
-| `Ctrl-s` | **s**ave                                    |
-| `Ctrl-e` | **e**xport png                              |
-| `Ctrl-t` | export `.txt` (ascii only, no color)        |
-| `Ctrl-k` | export `.csv`                               |
-| `Ctrl-m` | export `.xml`                               |
-| `Ctrl-p` | export `.xpm`                               |
-| `Ctrl-b` | export `BBCode` (ascii w/fgd color, no bkg) |
+| key      | function \[subfunction\]                                                         |
+| -------- | -------------------------------------------------------------------------------- |
+| `Ctrl-n` | **n**ew (in base path)                                                           |
+| `Ctrl-r` | **r**esize                                                                       |
+| `Ctrl-s` | **s**ave                                                                         |
+| `Ctrl-e` | **e**xport png                                                                   |
+| `Ctrl-t` | export `.txt` (ascii only, no color)                                             |
+| `Ctrl-k` | export `.csv`                                                                    |
+| `Ctrl-a` | export `.ans` (has restrictions, see [**Appendix D**](#appendix-d-ansi-art-ans)) |
+| `Ctrl-m` | export `.xml`                                                                    |
+| `Ctrl-p` | export `.xpm`                                                                    |
+| `Ctrl-b` | export `BBCode` (ascii w/fgd color, no bkg)                                      |
+| Ctrl-j   | export `C:DDA` ([see **Appendix I**](#appendix-i-exporting-ansi-art-for-cdda))   |
 
 ### Resize
 
@@ -550,7 +576,7 @@ Many commands that are either obvious or too advanced are not listed in REXPaint
 ## Appendix A: Known Issues
 
 1. Capslock has no affect on text entry. This is because the library is unable to detect key state changes outside the program itself, which would lead to confusion when the capslock effect is out of sync with the key state, thus capslock support was removed completely.
-2. Any font change commands (`Shift-<`/`>` and `Ctrl-PgUp`/`PgDn`) cannot be repeated without released the `Shift`/`Ctrl` key. This is due to an underlying library limitation on command processing when changing the video mode, and workarounds would have other undesirable side effects.
+2. Any font change commands (`Shift-<`/`>` and `Ctrl-PgUp`/`PgDn`) cannot be repeated without releasing the `Shift`/`Ctrl` key. This is due to an underlying library limitation on command processing when changing the video mode, and workarounds would have other undesirable side effects.
 3. When exporting to `.png` or taking a screenshot of the application, all foreground colors drawn on non-black background colors will have one or more of their RGB component values shifted by a tiny amount dependent on the background color (never by more than a value of 1, however). This issue is due to how the potential for alpha transparency of foreground colors is handled internally by the library, and cannot be corrected for at this time.
 4. If you run REXPaint off a thumb drive, **do not** remove the drive while the program is running, as file operations will seem to continue working when they are actually quietly failing in the background.
 
@@ -588,51 +614,73 @@ If you don't like working with binary, an alternative is to export images to one
 If you'd like to use (or at least reference) some pre-existing code for reading `.xp` files into your own game/software and converting them to an easy to use format, a number of generous developers have shared their solutions for input/output of REXPaint's native `.xp` format.
 
 * **C\#**
-  * SadRex by Thraka, a library for importing .xp files.
+  * SadRex by Thraka, a library for importing `.xp` files\
     <https://github.com/Thraka/SadRex>
-  * C#: RexReader by BaconSoap, the original C# .xp reader (though it has some issues).\
+  * RexReader by BaconSoap, the original C# `.xp` reader (though it has some issues)\
     <https://github.com/BaconSoap/RexReader>
 * **C++**
-  * REXReader-C++ by Tim Stoddard, a C++ version of BaconSoap's importer.\
+  * REXReader-C++ by Tim Stoddard, a C++ version of BaconSoap's importer\
     <https://github.com/gamepopper/REXReader-CPlusPlus/>
-  * REXSpeeder by pyridine, a fast xp loader that that also supports resaving\
+  * REXSpeeder by pyridine, a fast `.xp` loader that that also supports resaving\
     <https://github.com/pyridine/REXSpeeder>
   * mini-REXSpeeder by Mreuwu, a REXSpeeder alternative compatible with emscripten\
     <http://www.gridsagegames.com/forums/index.php?topic=492.0>
   * RLTK by thebracket, a multifeature roguelike toolkit including xp support\
     <https://github.com/thebracket/rltk>
+* **Go**
+  * reximage by Ben Nicholls, an `.xp` image importer\
+    <https://github.com/BenNicholls/burl-E/tree/master/reximage>
+* **Godot**
+  * rex_sprite by rzuf, an `.xp` image importer\
+    <https://github.com/rzuf79/GDAddons/tree/master/addons/rex_sprite>
 * **SFML 2.0**
-  * XPText by Tim Stoddard, an SFML entity for rendering xp images.\
+  * XPText by Tim Stoddard, an SFML entity for rendering `.xp` images\
     <https://github.com/gamepopper/REXReader-CPlusPlus/>
 * **Python**
-  * XPLoader by RCIX (includes libtcod support!).\
+  * XPLoader by RCIX (includes libtcod support!)\
     <https://github.com/RCIX/XPLoader>
 * **Python 3 + TDL**
   * XPLoaderPy3 by Edern76\
     <https://github.com/Edern76/XPLoaderPy3>
+* **Rust**
+  * rs-rexpaint by medusacle, import/export rexpaint ASCII art\
+    <https://gitlab.com/medusacle/rs-rexpaint>
+* **Swift**
+  * REXPaintImage by Steve Johnson, , an `.xp` reader\
+    <https://gist.github.com/irskep/1830b1255c1d73c8dd28da8b83998433>
 * **Java**
-  * xpreader by Stinus Petersen.\
+  * xpreader by Stinus Petersen\
     <https://github.com/biscon/xpreader>
 * **Javascript**
-  * rex_sprite by chiguireitor, a Node.js module for loading and drawing REXPaint sprites.\
+  * rex_sprite by chiguireitor, a Node.js module for loading and drawing REXPaint sprites\
     <http://www.gridsagegames.com/blogs/files/rex_sprite.js>
+  * glyph-image.js by Dominus-Sicarum, a Node.js module for loading `.xp` files as an Array of Maps\
+    <https://gist.github.com/Dominus-Sicarum/8ed5354e65c36d0910819b1d32087652>
 * **Haxe**
-  * REXPaintLoaderHaxe by Matt Johnson.\
+  * REXPaintLoaderHaxe by Matt Johnson\
     <http://lib.haxe.org/p/REXPaintLoaderHaxe/>
 * **Clojure**
-  * rockpick by Aaron Santos, an `.xp` import library.\
+  * rockpick by Aaron Santos, an `.xp` import library\
     <https://github.com/aaron-santos/rockpick>
+* **Nim**
+  * rexpaint_nim by Steve Landey, an `.xp` parser\
+    <https://github.com/irskep/rexpaint_nim>
+* **LOVE2D**
+  * rexpaint.lua by Vriska Serket, a lightweight REXPaint `.xp` file reader\
+    <https://gist.github.com/vriska-serket/334bfcfa7dfe7265ddbe089e4a51e522>
 
 Other tools:
 
-* png2rex: utility for converting `.png`s to `.xp`, by thebracket\
-  <https://github.com/thebracket/png2rex>
-* image2xp: python script to convert an image file to ASCII or .xp (sample output), by mtvee. ([sample output](https://i.imgur.com/rAwIWeu.jpg))\
+* **image2xp**: python script to convert an image file to ASCII or .xp (sample output), by mtvee. ([sample output](https://i.imgur.com/rAwIWeu.jpg))\
   <https://gist.github.com/mtvee/5629a2caa34dbf3ece95>
-* txt2xp: python script to convert a txt file to `.xp`, by mtvee.\
+* **png2rex**: utility for converting `.png`s to `.xp`, by thebracket\
+  <https://github.com/thebracket/png2rex>
+* **txt2xp**: python script to convert a txt file to `.xp`, by mtvee\
   <https://gist.github.com/mtvee/d7a4bd450e3cd6766580>
-* txt to .xp: C code to convert a txt file to .xp (minus the gzip step), by gumix.\
+* **txt to .xp**: C code to convert a `.txt` file to `.xp` (minus the gzip step), by gumix\
   <http://www.gridsagegames.com/forums/index.php?topic=416.msg3677#msg3677>
+* **rex2ansi**: utility for converting `.xp` files to 24-bit `.ans`, by Sludge.
+  <https://github.com/mlabbe/rex2ansi/releases>
 
 ## Appendix D: ANSI Art `.ans`
 
@@ -686,7 +734,7 @@ Properly formatted monospaced is output to a text file from where you can copy i
 
 Unlike pure text output, `BBCode` retains both the ASCII (stored as unicode) and foreground color. Since most forums do not support background colors, those in the image will be ignored. (I could add it as a configurable option if there's any demand, since some forums do have background color tags.)
 
-For now, if you plan to export `BBCode` I suggest filling the background with whatever color the forum uses, so you have an idea of what the image will actually look like; that and load up a taller narrow font more like what a website will use (also to have a better perspective). REXPaint only comes with square fonts right now, but others can be found on the web.\
+For now, if you plan to export `BBCode` I suggest filling the background with whatever color the forum uses, so you have an idea of what the image will actually look like; that and load up a taller narrow font more like what a website will use (also to have a better perspective). REXPaint's standard version only comes with square fonts right now, but others can be found on the website's Resources page, or are included in the ANSI version.\
 Another difference you'll notice when copying `BBCode` to a forum is that line spacing will cause a divide between each row, which may or may not impact the image's appearance depending on what glyphs are used.
 
 **important**: Space characters are usually collapsed when entered into a web browser. To avoid this issue and ensure that glyphs are arranged/indented properly in an image, a "hard space" unicode character is used in place of each normal space. Copying the `BBCode` from the output text file will also copy these hard space characters normally and maintain the image's appearance, but it seems that secondary copying from within a forum itself does **not** retain the proper spacing—it converts them to normal spaces, which will then collapse. The only way around this seems to be always copy the `BBCode` content from the original source text file. An alternative is to fill unused image space with the "full block" ASCII character (this is easy to do with the fill tool, and can be done before starting to draw). This method can also be used to create makeshift "backgrounds."
@@ -712,3 +760,20 @@ While the resulting `.xp` image will properly assign all foreground and backgrou
 A wider application of this feature would be for simple pixelwise conversion of any `.png` image into an `.xp` file, where each pixel represents the background color for a single cell. In that case, either specify that is the intent by appending `_1x1` to the filename (basically "each pixel is a cell"), or simply append nothing and it will be assumed this is the purpose.
 
 It is assumed the `.png` source has no transparency layer.
+
+## Appendix H: Batch Exporting `.png`s
+
+Simultaneously exporting every `.xp` image found in the `/images/` directory (and its subdirectories) is supported via command line, simply add the `-exportAll` switch when running REXPaint to create a `.png` image for each file. The font and character size used for all images is determined by your current `REXPaint.cfg` settings, and therefore font size is normally limited to those options which REXPaint can normally display on your device, although this restriction can be circumvented by enabling the `unlimitedFontSize` option described earlier. A summary of the conversion process can be found in the `run.log` file.
+
+## Appendix I: Exporting ANSI art for C:DDA
+
+REXPaint can also export art in the format used for the roguelike Cataclysm: Dark Days Ahead (`C:DDA`). It's a text format somewhat similar to `BBCode`, but with its own quirks. Use `Ctrl-j` to export to this format.
+
+For the export to produce a file that can be directly used by C:DDA, it may not have a width greater than 41 characters, thus it is recommended to set your `Default Image size` to that width in the options menu so that all art starts at that width by default. (No restrictions on height.) Also only C:DDA-compatible colors are exported, and for your convenience there's a premade palette including those colors attached to [this post](https://www.gridsagegames.com/forums/index.php?topic=1463.msg9345#msg9345).
+
+For the best editing experience, consider using the standard font used by C:DDA, Unifont 8x16, available on the website's Resources page.
+
+Other references:
+
+* [C:DDA Ascii_arts format](https://github.com/CleverRaven/Cataclysm-DDA/blob/master/doc/JSON_INFO.md#ascii_arts)
+* [C:DDA Colors](https://github.com/CleverRaven/Cataclysm-DDA/blob/master/doc/COLOR.md)
