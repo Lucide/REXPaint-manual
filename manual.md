@@ -1,4 +1,4 @@
-# REXPaint v1.05 - Manual <!-- omit in toc -->
+# REXPaint v1.50 - Manual <!-- omit in toc -->
 
 A powerful and user-friendly ASCII art editor.
 
