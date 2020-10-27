@@ -1,6 +1,6 @@
 
 =================================================================
- REXPaint v1.50 - Manual
+ REXPaint v1.60 - Manual
 =================================================================
 
 A powerful and user-friendly ASCII art editor.
@@ -56,6 +56,9 @@ An overview of REXPaint's major features:
 * Fonts
 	Glyphs
 	Glyph Swapping
+	Custom and Extended Fonts
+	Custom Glyph Mirroring
+	Custom Unicode Codepoints
 * Palettes
 	Selection & Editing
 	Color Picker
@@ -125,7 +128,7 @@ Drawing modes define the shape and area of the image affected while drawing. Onl
 	Fill ('i'): Applies the effect to all like cells attached to the one under the cursor. When comparing cells, fill mode only checks the attributes for which the apply mode is currently active. For example, if foreground color is the only active apply mode then fill mode propagates to all those attached cells with the same foreground color, regardless of their glyph or background color. Alternate Mode: Fill search is performed in 8 directions rather than 4, allowing the fill to travel along diagonals through obstacles.
 	Text ('t'): Types text onto the image. See the Text Input section below for a list of valid commands.
 	Copy (Ctrl-c): Copies a rectangular area of the image into the clipboard for later pasting. Always copies all attributes (glyph and colors) of the regardless of current apply settings. Alternate mode: Cut (Ctrl-x). Cut mode erases everything in a certain area after storing it to the clipboard. Note that if the Paste tool is in an alternate mode, any copy actions also automatically mirror the copied contents to match that mode.
-	Paste (Ctrl-v): Paste the clipboard contents to the image. While the copy/cut command stores all glyph and color information, only those attributes for which the apply mode is currently active will by pasted. Alternate modes: Flip clipboard contents horizontally, vertically, or both (by default this also automatically converts any non-symmetrical glyphs with mirror images; to flip by position only and leave glyphs unchanged set "Paste-flip ASCII" to No in the options menu).
+	Paste (Ctrl-v): Paste the clipboard contents to the image. While the copy/cut command stores all glyph and color information, only those attributes for which the apply mode is currently active will by pasted. Alternate modes: Flip clipboard contents horizontally, vertically, or both. By default this also automatically converts any non-symmetrical glyphs with mirror images (to flip by position only and leave glyphs unchanged set "Paste-flip ASCII" to No in the options menu). You can also override or customize flipping behavior for specific glyphs (see the Fonts section).
 
  Preview
 ---------
@@ -141,10 +144,6 @@ All image manipulation actions can be undone/redone (Ctrl-z/Ctrl-y, or just z/y)
 -----------------------------------------------------------------
 
 Images themselves do not store font information, instead remembering only what glyph/character index belongs at each position. This means you can dynamically change the size and/or appearance of an image by simply switching the font (Ctrl-PgUp/Dn or '<'/'>').
-	By default, both the GUI and images use a standard 256-character Code Page 437 font. REXPaint makes this same font available at several sizes (and changes #254 and #255 to radio boxes). You can edit these fonts (in the "data/fonts/" directory), and/or add new ones by creating a new .png bitmap and listing it in the "data/fonts/_config.xt" text file. Fonts do not require square glyphs (rectangles are okay), but both the GUI and Art font must use the same glyph dimensions.
-	When creating a custom font you could even replace some or all of the glyphs/characters/symbols, though you should leave the GUI font unchanged so the interface appears as expected (notice how _config.xt defines the GUI and art fonts separately--they do not have to use the same font!). Note that custom fonts always treat index 32 as a space, regardless of what the font bitmap contains there.
-	Although the default number of rows in a font bitmap is 16, and that is the largest number REXPaint will display at once, fonts with additional rows are supported, essentially allowing space for an "unlimited" number of glyphs in an image. Simply specify the proper number of rows available for the relevant art font in _config.xt and it will be loaded normally (16 columns is still a requirement), then you can use PgUp/Dn or the scroll wheel (with cursor in the glyph area) to see and use glyphs beyond #255. The mouse scrolling rate can be adjusted in REXPaint.cfg via glyphScrollRowCount. If any art fonts have more than 16 rows, the font window will display numbers at the top right indicating the number of rows currently above and below the current view. To make it easier to use large tilesets, by default right-clicking on an image glyph to select a glyph currently outside the viewable glyph window does not automatically scroll the view to show it unless you right-click on the same selected glyph a second time, though you can overide this behavior and have it always scroll immediately by setting glyphSelectAlwaysAutoscrolls in REXPaint.cfg.
-	One supported feature not used by the included fonts is alpha transparency. Font bitmaps are drawn as white on black, but know that using shades of gray will cause the foreground color to be semi-transparent to a degree equal to the shade of gray (e.g., pixels drawn using 128,128,128 gray will apear as 50% transparent). Also, even though they may only use two colors, bitmaps must be saved as 32-bit pngs (using 8-bit pngs will crash REXPaint). The font bitmap can use any background color, where REXPaint will automatically detect it by checking the upper leftmost pixel (at 0,0). By extension, if the character at the first position wants to use that pixel, REXPaint will not be able to automagically detect the background color; in this situation, you can override the background color key with a specific RGB color in REXPaint.cfg via fontKeyColorOverride.
 
  Glyphs
 --------
@@ -154,6 +153,23 @@ Select a glyph to draw with by clicking on it in the font window. Once you have 
  Glyph Swapping
 ----------------
 To replace every occurence of a glyph in all visible unlocked layers of an image, Shift-LMB on it in the font window, then Shift-LMB on the new glyph to replace it with. After selecting a source glyph, the swap can be cancelled by again pressing Shift-LMB on the same glyph.
+
+ Custom and Extended Fonts
+---------------------------
+By default, both the GUI and images use a standard 256-glyph Code Page 437 font. REXPaint makes this same font available at several sizes (and changes #254 and #255 to radio boxes). You can edit these fonts (in the "data/fonts/" directory), and/or add new ones by creating a new .png bitmap and listing it in the "data/fonts/_config.xt" text file. Fonts do not require square glyphs (rectangles are okay), but both the GUI and Art font must use the same glyph dimensions.
+	When creating a custom font you could even replace some or all of the glyphs/characters/symbols, though you'll probably want to leave the GUI font unchanged so the interface appears as expected (notice how _config.xt defines the GUI and art fonts separately--they do not have to use the same font!). Note that custom fonts always treat index 32 as a space, regardless of what the font bitmap contains there.
+	Although the default number of rows in a font bitmap is 16, and that is the largest number REXPaint will display at once in the glyph selection area, fonts with additional rows are supported, essentially allowing space for an unlimited number of glyphs in an image. Simply specify the proper number of rows available for the relevant art font in _config.xt and it will be loaded normally (16 columns is still a requirement), then you can use PgUp/Dn or the scroll wheel (with cursor in the glyph area) to see and use glyphs beyond #255. The mouse scrolling rate can be adjusted in REXPaint.cfg via glyphScrollRowCount. If any art fonts have more than 16 rows, the font window will display numbers at the top right indicating the number of rows currently above and below the current view. To make it easier to use large tilesets, by default right-clicking on an image glyph to select a glyph currently outside the viewable glyph window does not automatically scroll the view to show it unless you right-click on the same selected glyph a second time, though you can overide this behavior and have it always scroll immediately by setting glyphSelectAlwaysAutoscrolls in REXPaint.cfg.
+	If an image containing glyphs beyond #255 previously saved by REXPaint is later loaded into a copy of REXPaint that does not currently have any fonts large enough to include the required indices, it will have those glyphs temporarily converted to spaces. This does not affect the image file itself, and saving such an image will be blocked by REXPaint in order to avoid losing data, although this block can be circumvented in REXPaint.cfg via noSaveForOutOfBoundsGlyphs if required. Any images found to have out-of-bounds glyphs are marked by an asterisk in the browser (blue by default).
+	Notice in _config.xt that each art font also includes two additional parameters: Unicode and Mirror. These specify two text files, also expected to be found in the "data/fonts/" directory, which define code points for UTF8 text exporting and glyph mirroring behavior for the paste tool, respectively. The default files provided are compatible with a standard CP437 layout. If neither of those features is required for a given font, using the default files is fine, or even just insert a single hypen ('-') for a filename there and it will be ignored. See the sections below for more information on customizing these features.
+	One supported bitmap feature not used by the included fonts is alpha transparency. Font bitmaps are drawn as white on black, but know that using shades of gray will cause the foreground color to be semi-transparent to a degree equal to the shade of gray (e.g., pixels drawn using 128,128,128 gray will apear as 50% transparent). Also, even though they may only use two colors, bitmaps must be saved as 32-bit pngs (using 8-bit pngs will crash REXPaint). The font bitmap can use any background color, where REXPaint will automatically detect it by checking the upper leftmost pixel (at 0,0). By extension, if the glyph at the first position wants to use that pixel, REXPaint will not be able to automagically detect the background color; in this situation, you can override the background color key with a specific RGB color in REXPaint.cfg via fontKeyColorOverride.
+
+ Custom Glyph Mirroring
+------------------------
+While the Paste tool's alternate mode can mirror CP437 glyphs, with custom fonts using some other layout it is often desirable to specify different sets of glyph pairs for this purpose. You can do this by creating a new text file in the "data/fonts/" directory that defines pairs and assign it to its respective font in _confit.xt via the Mirror column. See the default CP437 _mirror.txt file for an example of the required layout. Each line should specify a single pair, and indicate whether the mirroring direction is horizontal (h) or vertical (v). Indices start from 0 and proceed in row-major order, as displayed in the font bitmap. Add optional comments at the end of a line by preceding them with two slashes.
+
+ Custom Unicode Codepoints
+---------------------------
+By default, images exported as text use UTF8 code points based on the CP437 layout, but some users might want to either override those values or specify UTF8 code points for glyphs outside the CP437 range when using extended custom fonts. You can do this by creating a new text file in the "data/fonts/" directory that defines Unicode code points and assign it to its respective font in _confit.xt via the Unicode column. See the default CP437 _utf8.txt file for an example of the required layout. Each line should specify a single glyph index followed by its decimal code point. Indices start from 0 and proceed in row-major order, as displayed in the font bitmap, and any index not specified in the file will produce a '?' where an imagine using that glyph is exported. Add optional comments at the end of a line by preceding them with two slashes.
 
 
 -----------------------------------------------------------------
@@ -671,11 +687,9 @@ Simultaneously exporting every .xp image found in the /images/ directory (and it
 
 REXPaint can also export art in the format used for the roguelike Cataclysm: Dark Days Ahead (C:DDA). It's a text format somewhat similar to BBCode, but with its own quirks. Use Ctrl-j to export to this format.
 
-For the export to produce a file that can be directly used by C:DDA, it may not have a width greater than 41 characters, thus it is recommended to set your Default Image size to that width in the options menu so that all art starts at that width by default. (No restrictions on height.) Also only C:DDA-compatible colors are exported, and for your convenience there's a premade palette including those colors attached to this post:
-https://www.gridsagegames.com/forums/index.php?topic=1463.msg9345#msg9345
-
-For the best editing experience, consider using the standard font used by C:DDA, Unifont 8x16, available on the website's Resources page.
+For the export to produce a file that can be directly used by C:DDA, it may not have a width greater than 41 characters, thus it is recommended to set your Default Image size to that width in the options menu so that all art starts at that width by default. (No restrictions on height.) Also only C:DDA-compatible colors are exported, and for your convenience there's a premade compatible palette available on the website's Resources page. For the best editing experience, consider using the standard font used by C:DDA, Unifont 8x16, also available on the website's Resources page.
 
 Other references:
 * C:DDA Ascii_arts format: https://github.com/CleverRaven/Cataclysm-DDA/blob/master/doc/JSON_INFO.md#ascii_arts
 * C:DDA Colors: https://github.com/CleverRaven/Cataclysm-DDA/blob/master/doc/COLOR.md
+* C:DDA Art Guide: https://github.com/CleverRaven/Cataclysm-DDA/blob/master/doc/ASCII_ARTS.md

@@ -29,7 +29,7 @@
 12. single chars were quoted with `''` that's a bit of a programmer thing, they should be converted to `""`
 13. URLs should be represented as text links when appropriate
 14. text links to appendices should be **bold**
-15. the manual should be checked with a linter, but warning `MD024` should be ignored.
+15. the manual should be checked with a linter, and warning `MD024` should be ignored.
 
 ---
 Feel free to suggest changes and improvements
